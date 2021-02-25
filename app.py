@@ -63,7 +63,7 @@ def stations():
 @app.route("/api/v1.0/tobs")
 def mostActive():
     session = Session(engine)
-    
+
     year_ago = dt.date(2017,8,23) - dt.timedelta(days=365)
     station = measurement.station
     count = func.count(measurement.station)
@@ -78,6 +78,34 @@ def mostActive():
     session.close()
 
     return jsonify(list(np.ravel(temp_data)))
+
+@app.route("/api/v1.0/<start>")
+def startTemperatures(start):
+
+    session = Session(engine)
+
+    temp_analysis = session.query(
+        func.min(measurement.tobs),
+        func.max(measurement.tobs),
+        func.avg(measurement.tobs)).filter(measurement.date >= start).all()
+    
+    session.close()
+
+    return jsonify(list(np.ravel(temp_analysis)))
+
+@app.route("/api/v1.0/<start>/<end>")
+def endTemperatures(start, end):
+
+    session = Session(engine)
+
+    temp_analysis = session.query(
+        func.min(measurement.tobs),
+        func.max(measurement.tobs),
+        func.avg(measurement.tobs)).filter(measurement.date >= start).filter(measurement.date <= end).all()
+    
+    session.close()
+
+    return jsonify(list(np.ravel(temp_analysis)))
 
 if __name__ == '__main__':
     app.run(debug=True)
