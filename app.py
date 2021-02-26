@@ -42,8 +42,7 @@ def precipitation():
     all_dates = []
     for date, prcp in results:
         dates_dict = {}
-        dates_dict["date"] = date
-        dates_dict["precipitation"] = prcp
+        dates_dict[date] = prcp
         all_dates.append(dates_dict)
 
     return jsonify(all_dates)
@@ -72,40 +71,65 @@ def mostActive():
 
     station = most_active[0]
 
-    temp_data = session.query(measurement.tobs).filter(measurement.date >= year_ago).\
+    results = session.query(measurement.date, measurement.tobs).filter(measurement.date >= year_ago).\
         filter(measurement.station == station).all()
 
     session.close()
 
-    return jsonify(list(np.ravel(temp_data)))
+    temp_data = []
+
+    for date, tobs in results:
+        new_dict = {}
+        new_dict[date] = tobs
+        temp_data.append(new_dict)
+
+    return jsonify(temp_data)
 
 @app.route("/api/v1.0/<start>")
 def startTemperatures(start):
 
     session = Session(engine)
 
-    temp_analysis = session.query(
-        func.min(measurement.tobs),
-        func.max(measurement.tobs),
+    results = session.query(
+        func.min(measurement.tobs),\
+        func.max(measurement.tobs),\
         func.avg(measurement.tobs)).filter(measurement.date >= start).all()
     
     session.close()
 
-    return jsonify(list(np.ravel(temp_analysis)))
+    temp_analysis = []
+
+    for min, max, avg in results:
+        temp_dict = {}
+        temp_dict["Min"] = min
+        temp_dict["Max"] = max
+        temp_dict["Avg"] = avg
+        temp_analysis.append(temp_dict)
+
+    return jsonify(temp_analysis)
 
 @app.route("/api/v1.0/<start>/<end>")
 def endTemperatures(start, end):
 
     session = Session(engine)
 
-    temp_analysis = session.query(
+    results = session.query(
         func.min(measurement.tobs),
         func.max(measurement.tobs),
         func.avg(measurement.tobs)).filter(measurement.date >= start).filter(measurement.date <= end).all()
     
     session.close()
 
-    return jsonify(list(np.ravel(temp_analysis)))
+    temp_analysis = []
+
+    for min, max, avg in results:
+        temp_dict = {}
+        temp_dict["Min"] = min
+        temp_dict["Max"] = max
+        temp_dict["Avg"] = avg
+        temp_analysis.append(temp_dict)
+
+    return jsonify(temp_analysis)
 
 if __name__ == '__main__':
     app.run(debug=True)
